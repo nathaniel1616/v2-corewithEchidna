@@ -1,0 +1,712 @@
+<style> code { white-space: pre-wrap; display: block; background-color: #eee; }.executed { background-color: #afa; }.reverted { background-color: #ffa; }.unexecuted { background-color: #faa; }.neutral { background-color: #eee; }</style><b>/home/v2-core/contracts/UniswapV2ERC20.sol</b>
+<code>
+   1 |     | <span class='unexecuted'>pragma solidity =0.5.16;</span>
+   2 |     | <span class='neutral'></span>
+   3 |     | <span class='neutral'>import &#39;./interfaces/IUniswapV2ERC20.sol&#39;;</span>
+   4 |     | <span class='neutral'>import &#39;./libraries/SafeMath.sol&#39;;</span>
+   5 |     | <span class='neutral'></span>
+   6 | *   | <span class='executed'>contract UniswapV2ERC20 is IUniswapV2ERC20 {</span>
+   7 |     | <span class='neutral'>    using SafeMath for uint;</span>
+   8 |     | <span class='neutral'></span>
+   9 |     | <span class='unexecuted'>    string public constant name = &#39;Uniswap V2&#39;;</span>
+  10 |     | <span class='unexecuted'>    string public constant symbol = &#39;UNI-V2&#39;;</span>
+  11 |     | <span class='unexecuted'>    uint8 public constant decimals = 18;</span>
+  12 | *   | <span class='executed'>    uint  public totalSupply;</span>
+  13 | *   | <span class='executed'>    mapping(address =&gt; uint) public balanceOf;</span>
+  14 |     | <span class='unexecuted'>    mapping(address =&gt; mapping(address =&gt; uint)) public allowance;</span>
+  15 |     | <span class='neutral'></span>
+  16 |     | <span class='unexecuted'>    bytes32 public DOMAIN_SEPARATOR;</span>
+  17 |     | <span class='neutral'>    // keccak256(&quot;Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)&quot;);</span>
+  18 |     | <span class='unexecuted'>    bytes32 public constant PERMIT_TYPEHASH = 0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9;</span>
+  19 |     | <span class='unexecuted'>    mapping(address =&gt; uint) public nonces;</span>
+  20 |     | <span class='neutral'></span>
+  21 |     | <span class='neutral'>    event Approval(address indexed owner, address indexed spender, uint value);</span>
+  22 |     | <span class='neutral'>    event Transfer(address indexed from, address indexed to, uint value);</span>
+  23 |     | <span class='neutral'></span>
+  24 |     | <span class='unexecuted'>    constructor() public {</span>
+  25 |     | <span class='neutral'>        uint chainId;</span>
+  26 |     | <span class='neutral'>        assembly {</span>
+  27 |     | <span class='unexecuted'>            chainId := chainid</span>
+  28 |     | <span class='neutral'>        }</span>
+  29 |     | <span class='unexecuted'>        DOMAIN_SEPARATOR = keccak256(</span>
+  30 |     | <span class='unexecuted'>            abi.encode(</span>
+  31 |     | <span class='unexecuted'>                keccak256(&#39;EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)&#39;),</span>
+  32 |     | <span class='unexecuted'>                keccak256(bytes(name)),</span>
+  33 |     | <span class='unexecuted'>                keccak256(bytes(&#39;1&#39;)),</span>
+  34 |     | <span class='neutral'>                chainId,</span>
+  35 |     | <span class='unexecuted'>                address(this)</span>
+  36 |     | <span class='neutral'>            )</span>
+  37 |     | <span class='neutral'>        );</span>
+  38 |     | <span class='neutral'>    }</span>
+  39 |     | <span class='neutral'></span>
+  40 | *   | <span class='executed'>    function _mint(address to, uint value) internal {</span>
+  41 | *   | <span class='executed'>        totalSupply = totalSupply.add(value);</span>
+  42 | *   | <span class='executed'>        balanceOf[to] = balanceOf[to].add(value);</span>
+  43 | *   | <span class='executed'>        emit Transfer(address(0), to, value);</span>
+  44 |     | <span class='neutral'>    }</span>
+  45 |     | <span class='neutral'></span>
+  46 |     | <span class='unexecuted'>    function _burn(address from, uint value) internal {</span>
+  47 |     | <span class='unexecuted'>        balanceOf[from] = balanceOf[from].sub(value);</span>
+  48 |     | <span class='unexecuted'>        totalSupply = totalSupply.sub(value);</span>
+  49 |     | <span class='unexecuted'>        emit Transfer(from, address(0), value);</span>
+  50 |     | <span class='neutral'>    }</span>
+  51 |     | <span class='neutral'></span>
+  52 |     | <span class='unexecuted'>    function _approve(address owner, address spender, uint value) private {</span>
+  53 |     | <span class='unexecuted'>        allowance[owner][spender] = value;</span>
+  54 |     | <span class='unexecuted'>        emit Approval(owner, spender, value);</span>
+  55 |     | <span class='neutral'>    }</span>
+  56 |     | <span class='neutral'></span>
+  57 |     | <span class='unexecuted'>    function _transfer(address from, address to, uint value) private {</span>
+  58 |     | <span class='unexecuted'>        balanceOf[from] = balanceOf[from].sub(value);</span>
+  59 |     | <span class='unexecuted'>        balanceOf[to] = balanceOf[to].add(value);</span>
+  60 |     | <span class='unexecuted'>        emit Transfer(from, to, value);</span>
+  61 |     | <span class='neutral'>    }</span>
+  62 |     | <span class='neutral'></span>
+  63 | *   | <span class='executed'>    function approve(address spender, uint value) external returns (bool) {</span>
+  64 |     | <span class='unexecuted'>        _approve(msg.sender, spender, value);</span>
+  65 |     | <span class='unexecuted'>        return true;</span>
+  66 |     | <span class='neutral'>    }</span>
+  67 |     | <span class='neutral'></span>
+  68 |     | <span class='unexecuted'>    function transfer(address to, uint value) external returns (bool) {</span>
+  69 |     | <span class='unexecuted'>        _transfer(msg.sender, to, value);</span>
+  70 |     | <span class='neutral'>        return true;</span>
+  71 |     | <span class='neutral'>    }</span>
+  72 |     | <span class='neutral'></span>
+  73 |     | <span class='unexecuted'>    function transferFrom(address from, address to, uint value) external returns (bool) {</span>
+  74 |     | <span class='unexecuted'>        if (allowance[from][msg.sender] != uint(-1)) {</span>
+  75 |     | <span class='unexecuted'>            allowance[from][msg.sender] = allowance[from][msg.sender].sub(value);</span>
+  76 |     | <span class='neutral'>        }</span>
+  77 |     | <span class='unexecuted'>        _transfer(from, to, value);</span>
+  78 |     | <span class='unexecuted'>        return true;</span>
+  79 |     | <span class='neutral'>    }</span>
+  80 |     | <span class='neutral'></span>
+  81 | *   | <span class='executed'>    function permit(address owner, address spender, uint value, uint deadline, uint8 v, bytes32 r, bytes32 s) external {</span>
+  82 |     | <span class='unexecuted'>        require(deadline &gt;= block.timestamp, &#39;UniswapV2: EXPIRED&#39;);</span>
+  83 |     | <span class='unexecuted'>        bytes32 digest = keccak256(</span>
+  84 |     | <span class='unexecuted'>            abi.encodePacked(</span>
+  85 |     | <span class='neutral'>                &#39;\x19\x01&#39;,</span>
+  86 |     | <span class='unexecuted'>                DOMAIN_SEPARATOR,</span>
+  87 |     | <span class='unexecuted'>                keccak256(abi.encode(PERMIT_TYPEHASH, owner, spender, value, nonces[owner]++, deadline))</span>
+  88 |     | <span class='neutral'>            )</span>
+  89 |     | <span class='neutral'>        );</span>
+  90 |     | <span class='unexecuted'>        address recoveredAddress = ecrecover(digest, v, r, s);</span>
+  91 |     | <span class='unexecuted'>        require(recoveredAddress != address(0) &amp;&amp; recoveredAddress == owner, &#39;UniswapV2: INVALID_SIGNATURE&#39;);</span>
+  92 |     | <span class='unexecuted'>        _approve(owner, spender, value);</span>
+  93 |     | <span class='neutral'>    }</span>
+  94 |     | <span class='neutral'></span>
+  95 | *   | <span class='executed'>    function manualMint(address to, uint value) external {</span>
+  96 | *   | <span class='executed'>        _mint(to, value);</span>
+  97 |     | <span class='neutral'>    }</span>
+  98 |     | <span class='neutral'>}</span>
+  99 |     | <span class='neutral'></span>
+
+</code>
+<br />
+
+<b>/home/v2-core/contracts/UniswapV2Factory.sol</b>
+<code>
+  1 |     | <span class='neutral'>pragma solidity =0.5.16;</span>
+  2 |     | <span class='neutral'></span>
+  3 |     | <span class='neutral'>import &#39;./interfaces/IUniswapV2Factory.sol&#39;;</span>
+  4 |     | <span class='neutral'>import &#39;./UniswapV2Pair.sol&#39;;</span>
+  5 |     | <span class='neutral'></span>
+  6 | *   | <span class='executed'>contract UniswapV2Factory is IUniswapV2Factory {</span>
+  7 | *   | <span class='executed'>    address public feeTo;</span>
+  8 |     | <span class='unexecuted'>    address public feeToSetter;</span>
+  9 |     | <span class='neutral'></span>
+ 10 |     | <span class='unexecuted'>    mapping(address =&gt; mapping(address =&gt; address)) public getPair;</span>
+ 11 |     | <span class='unexecuted'>    address[] public allPairs;</span>
+ 12 |     | <span class='neutral'></span>
+ 13 |     | <span class='neutral'>    event PairCreated(address indexed token0, address indexed token1, address pair, uint);</span>
+ 14 |     | <span class='neutral'></span>
+ 15 |     | <span class='unexecuted'>    constructor(address _feeToSetter) public {</span>
+ 16 |     | <span class='unexecuted'>        feeToSetter = _feeToSetter;</span>
+ 17 |     | <span class='neutral'>    }</span>
+ 18 |     | <span class='neutral'></span>
+ 19 |     | <span class='unexecuted'>    function allPairsLength() external view returns (uint) {</span>
+ 20 |     | <span class='unexecuted'>        return allPairs.length;</span>
+ 21 |     | <span class='neutral'>    }</span>
+ 22 |     | <span class='neutral'></span>
+ 23 |     | <span class='unexecuted'>    function createPair(address tokenA, address tokenB) external returns (address pair) {</span>
+ 24 |     | <span class='unexecuted'>        require(tokenA != tokenB, &#39;UniswapV2: IDENTICAL_ADDRESSES&#39;);</span>
+ 25 |     | <span class='unexecuted'>        (address token0, address token1) = tokenA &lt; tokenB ? (tokenA, tokenB) : (tokenB, tokenA);</span>
+ 26 |     | <span class='unexecuted'>        require(token0 != address(0), &#39;UniswapV2: ZERO_ADDRESS&#39;);</span>
+ 27 |     | <span class='unexecuted'>        require(getPair[token0][token1] == address(0), &#39;UniswapV2: PAIR_EXISTS&#39;); // single check is sufficient</span>
+ 28 |     | <span class='unexecuted'>        bytes memory bytecode = type(UniswapV2Pair).creationCode;</span>
+ 29 |     | <span class='unexecuted'>        bytes32 salt = keccak256(abi.encodePacked(token0, token1));</span>
+ 30 |     | <span class='neutral'>        assembly {</span>
+ 31 |     | <span class='unexecuted'>            pair := create2(0, add(bytecode, 32), mload(bytecode), salt)</span>
+ 32 |     | <span class='neutral'>        }</span>
+ 33 |     | <span class='unexecuted'>        IUniswapV2Pair(pair).initialize(token0, token1);</span>
+ 34 |     | <span class='unexecuted'>        getPair[token0][token1] = pair;</span>
+ 35 |     | <span class='unexecuted'>        getPair[token1][token0] = pair; // populate mapping in the reverse direction</span>
+ 36 |     | <span class='unexecuted'>        allPairs.push(pair);</span>
+ 37 |     | <span class='unexecuted'>        emit PairCreated(token0, token1, pair, allPairs.length);</span>
+ 38 |     | <span class='neutral'>    }</span>
+ 39 |     | <span class='neutral'></span>
+ 40 |     | <span class='unexecuted'>    function setFeeTo(address _feeTo) external {</span>
+ 41 |     | <span class='unexecuted'>        require(msg.sender == feeToSetter, &#39;UniswapV2: FORBIDDEN&#39;);</span>
+ 42 |     | <span class='unexecuted'>        feeTo = _feeTo;</span>
+ 43 |     | <span class='neutral'>    }</span>
+ 44 |     | <span class='neutral'></span>
+ 45 |     | <span class='unexecuted'>    function setFeeToSetter(address _feeToSetter) external {</span>
+ 46 |     | <span class='unexecuted'>        require(msg.sender == feeToSetter, &#39;UniswapV2: FORBIDDEN&#39;);</span>
+ 47 |     | <span class='unexecuted'>        feeToSetter = _feeToSetter;</span>
+ 48 |     | <span class='neutral'>    }</span>
+ 49 |     | <span class='neutral'>}</span>
+ 50 |     | <span class='neutral'></span>
+
+</code>
+<br />
+
+<b>/home/v2-core/contracts/UniswapV2Pair.sol</b>
+<code>
+   1 |     | <span class='neutral'>pragma solidity =0.5.16;</span>
+   2 |     | <span class='neutral'></span>
+   3 |     | <span class='neutral'>import &#39;./interfaces/IUniswapV2Pair.sol&#39;;</span>
+   4 |     | <span class='neutral'>import &#39;./UniswapV2ERC20.sol&#39;;</span>
+   5 |     | <span class='neutral'>import &#39;./libraries/Math.sol&#39;;</span>
+   6 |     | <span class='neutral'>import &#39;./libraries/UQ112x112.sol&#39;;</span>
+   7 |     | <span class='neutral'>import &#39;./interfaces/IERC20.sol&#39;;</span>
+   8 |     | <span class='neutral'>import &#39;./interfaces/IUniswapV2Factory.sol&#39;;</span>
+   9 |     | <span class='neutral'>import &#39;./interfaces/IUniswapV2Callee.sol&#39;;</span>
+  10 |     | <span class='neutral'></span>
+  11 | *   | <span class='executed'>contract UniswapV2Pair is IUniswapV2Pair, UniswapV2ERC20 {</span>
+  12 |     | <span class='neutral'>    using SafeMath  for uint;</span>
+  13 |     | <span class='neutral'>    using UQ112x112 for uint224;</span>
+  14 |     | <span class='neutral'></span>
+  15 | *   | <span class='executed'>    uint public constant MINIMUM_LIQUIDITY = 10**3;</span>
+  16 |     | <span class='unexecuted'>    bytes4 private constant SELECTOR = bytes4(keccak256(bytes(&#39;transfer(address,uint256)&#39;)));</span>
+  17 |     | <span class='neutral'></span>
+  18 |     | <span class='unexecuted'>    address public factory;</span>
+  19 |     | <span class='unexecuted'>    address public token0;</span>
+  20 |     | <span class='unexecuted'>    address public token1;</span>
+  21 |     | <span class='neutral'></span>
+  22 |     | <span class='neutral'>    uint112 private reserve0;           // uses single storage slot, accessible via getReserves</span>
+  23 |     | <span class='neutral'>    uint112 private reserve1;           // uses single storage slot, accessible via getReserves</span>
+  24 |     | <span class='neutral'>    uint32  private blockTimestampLast; // uses single storage slot, accessible via getReserves</span>
+  25 |     | <span class='neutral'></span>
+  26 |     | <span class='unexecuted'>    uint public price0CumulativeLast;</span>
+  27 |     | <span class='unexecuted'>    uint public price1CumulativeLast;</span>
+  28 |     | <span class='unexecuted'>    uint public kLast; // reserve0 * reserve1, as of immediately after the most recent liquidity event</span>
+  29 |     | <span class='neutral'></span>
+  30 |     | <span class='unexecuted'>    uint private unlocked = 1;</span>
+  31 |     | <span class='neutral'>    modifier lock() {</span>
+  32 | *   | <span class='executed'>        require(unlocked == 1, &#39;UniswapV2: LOCKED&#39;);</span>
+  33 | *   | <span class='executed'>        unlocked = 0;</span>
+  34 |     | <span class='unexecuted'>        _;</span>
+  35 |     | <span class='unexecuted'>        unlocked = 1;</span>
+  36 |     | <span class='neutral'>    }</span>
+  37 |     | <span class='neutral'></span>
+  38 | *   | <span class='executed'>    function getReserves() public view returns (uint112 _reserve0, uint112 _reserve1, uint32 _blockTimestampLast) {</span>
+  39 | *   | <span class='executed'>        _reserve0 = reserve0;</span>
+  40 | *   | <span class='executed'>        _reserve1 = reserve1;</span>
+  41 | *   | <span class='executed'>        _blockTimestampLast = blockTimestampLast;</span>
+  42 |     | <span class='neutral'>    }</span>
+  43 |     | <span class='neutral'></span>
+  44 |     | <span class='unexecuted'>    function _safeTransfer(address token, address to, uint value) private {</span>
+  45 |     | <span class='unexecuted'>        (bool success, bytes memory data) = token.call(abi.encodeWithSelector(SELECTOR, to, value));</span>
+  46 |     | <span class='unexecuted'>        require(success &amp;&amp; (data.length == 0 || abi.decode(data, (bool))), &#39;UniswapV2: TRANSFER_FAILED&#39;);</span>
+  47 |     | <span class='neutral'>    }</span>
+  48 |     | <span class='neutral'></span>
+  49 |     | <span class='neutral'>    event Mint(address indexed sender, uint amount0, uint amount1);</span>
+  50 |     | <span class='neutral'>    event Burn(address indexed sender, uint amount0, uint amount1, address indexed to);</span>
+  51 |     | <span class='neutral'>    event Swap(</span>
+  52 |     | <span class='neutral'>        address indexed sender,</span>
+  53 |     | <span class='neutral'>        uint amount0In,</span>
+  54 |     | <span class='neutral'>        uint amount1In,</span>
+  55 |     | <span class='neutral'>        uint amount0Out,</span>
+  56 |     | <span class='neutral'>        uint amount1Out,</span>
+  57 |     | <span class='neutral'>        address indexed to</span>
+  58 |     | <span class='neutral'>    );</span>
+  59 |     | <span class='neutral'>    event Sync(uint112 reserve0, uint112 reserve1);</span>
+  60 |     | <span class='neutral'></span>
+  61 |     | <span class='unexecuted'>    constructor() public {</span>
+  62 |     | <span class='unexecuted'>        factory = msg.sender;</span>
+  63 |     | <span class='neutral'>    }</span>
+  64 |     | <span class='neutral'></span>
+  65 |     | <span class='neutral'>    // called once by the factory at time of deployment</span>
+  66 |     | <span class='unexecuted'>    function initialize(address _token0, address _token1) external {</span>
+  67 |     | <span class='unexecuted'>        require(msg.sender == factory, &#39;UniswapV2: FORBIDDEN&#39;); // sufficient check</span>
+  68 |     | <span class='unexecuted'>        token0 = _token0;</span>
+  69 |     | <span class='unexecuted'>        token1 = _token1;</span>
+  70 |     | <span class='neutral'>    }</span>
+  71 |     | <span class='neutral'></span>
+  72 |     | <span class='neutral'>    // update reserves and, on the first call per block, price accumulators</span>
+  73 |     | <span class='unexecuted'>    function _update(uint balance0, uint balance1, uint112 _reserve0, uint112 _reserve1) private {</span>
+  74 |     | <span class='unexecuted'>        require(balance0 &lt;= uint112(-1) &amp;&amp; balance1 &lt;= uint112(-1), &#39;UniswapV2: OVERFLOW&#39;);</span>
+  75 |     | <span class='unexecuted'>        uint32 blockTimestamp = uint32(block.timestamp % 2**32);</span>
+  76 |     | <span class='unexecuted'>        uint32 timeElapsed = blockTimestamp - blockTimestampLast; // overflow is desired</span>
+  77 |     | <span class='unexecuted'>        if (timeElapsed &gt; 0 &amp;&amp; _reserve0 != 0 &amp;&amp; _reserve1 != 0) {</span>
+  78 |     | <span class='neutral'>            // * never overflows, and + overflow is desired</span>
+  79 |     | <span class='unexecuted'>            price0CumulativeLast += uint(UQ112x112.encode(_reserve1).uqdiv(_reserve0)) * timeElapsed;</span>
+  80 |     | <span class='unexecuted'>            price1CumulativeLast += uint(UQ112x112.encode(_reserve0).uqdiv(_reserve1)) * timeElapsed;</span>
+  81 |     | <span class='neutral'>        }</span>
+  82 |     | <span class='unexecuted'>        reserve0 = uint112(balance0);</span>
+  83 |     | <span class='unexecuted'>        reserve1 = uint112(balance1);</span>
+  84 |     | <span class='unexecuted'>        blockTimestampLast = blockTimestamp;</span>
+  85 |     | <span class='unexecuted'>        emit Sync(reserve0, reserve1);</span>
+  86 |     | <span class='neutral'>    }</span>
+  87 |     | <span class='neutral'></span>
+  88 |     | <span class='neutral'>    // if fee is on, mint liquidity equivalent to 1/6th of the growth in sqrt(k)</span>
+  89 | *   | <span class='executed'>    function _mintFee(uint112 _reserve0, uint112 _reserve1) private returns (bool feeOn) {</span>
+  90 | *   | <span class='executed'>        address feeTo = IUniswapV2Factory(factory).feeTo();</span>
+  91 | *   | <span class='executed'>        feeOn = feeTo != address(0);</span>
+  92 | *   | <span class='executed'>        uint _kLast = kLast; // gas savings</span>
+  93 | *   | <span class='executed'>        if (feeOn) {</span>
+  94 |     | <span class='unexecuted'>            if (_kLast != 0) {</span>
+  95 |     | <span class='unexecuted'>                uint rootK = Math.sqrt(uint(_reserve0).mul(_reserve1));</span>
+  96 |     | <span class='unexecuted'>                uint rootKLast = Math.sqrt(_kLast);</span>
+  97 |     | <span class='unexecuted'>                if (rootK &gt; rootKLast) {</span>
+  98 |     | <span class='unexecuted'>                    uint numerator = totalSupply.mul(rootK.sub(rootKLast));</span>
+  99 |     | <span class='unexecuted'>                    uint denominator = rootK.mul(5).add(rootKLast);</span>
+ 100 |     | <span class='unexecuted'>                    uint liquidity = numerator / denominator;</span>
+ 101 |     | <span class='unexecuted'>                    if (liquidity &gt; 0) _mint(feeTo, liquidity);</span>
+ 102 |     | <span class='neutral'>                }</span>
+ 103 |     | <span class='neutral'>            }</span>
+ 104 | *   | <span class='executed'>        } else if (_kLast != 0) {</span>
+ 105 |     | <span class='unexecuted'>            kLast = 0;</span>
+ 106 |     | <span class='neutral'>        }</span>
+ 107 |     | <span class='neutral'>    }</span>
+ 108 |     | <span class='neutral'></span>
+ 109 |     | <span class='neutral'>    // this low-level function should be called from a contract which performs important safety checks</span>
+ 110 | *   | <span class='executed'>    function mint(address to) external lock returns (uint liquidity) {</span>
+ 111 | *   | <span class='executed'>        (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings</span>
+ 112 | *   | <span class='executed'>        uint balance0 = IERC20(token0).balanceOf(address(this));</span>
+ 113 | *   | <span class='executed'>        uint balance1 = IERC20(token1).balanceOf(address(this));</span>
+ 114 | *   | <span class='executed'>        uint amount0 = balance0.sub(_reserve0);</span>
+ 115 | *   | <span class='executed'>        uint amount1 = balance1.sub(_reserve1);</span>
+ 116 |     | <span class='neutral'></span>
+ 117 | *   | <span class='executed'>        bool feeOn = _mintFee(_reserve0, _reserve1);</span>
+ 118 | *   | <span class='executed'>        uint _totalSupply = totalSupply; // gas savings, must be defined here since totalSupply can update in _mintFee</span>
+ 119 | *   | <span class='executed'>        if (_totalSupply == 0) {</span>
+ 120 | *   | <span class='executed'>            liquidity = Math.sqrt(amount0.mul(amount1)).sub(MINIMUM_LIQUIDITY);</span>
+ 121 |     | <span class='unexecuted'>           _mint(address(0), MINIMUM_LIQUIDITY); // permanently lock the first MINIMUM_LIQUIDITY tokens</span>
+ 122 |     | <span class='neutral'>        } else {</span>
+ 123 |     | <span class='unexecuted'>            liquidity = Math.min(amount0.mul(_totalSupply) / _reserve0, amount1.mul(_totalSupply) / _reserve1);</span>
+ 124 |     | <span class='neutral'>        }</span>
+ 125 |     | <span class='unexecuted'>        require(liquidity &gt; 0, &#39;UniswapV2: INSUFFICIENT_LIQUIDITY_MINTED&#39;);</span>
+ 126 |     | <span class='unexecuted'>        _mint(to, liquidity);</span>
+ 127 |     | <span class='neutral'></span>
+ 128 |     | <span class='unexecuted'>        _update(balance0, balance1, _reserve0, _reserve1);</span>
+ 129 |     | <span class='unexecuted'>        if (feeOn) kLast = uint(reserve0).mul(reserve1); // reserve0 and reserve1 are up-to-date</span>
+ 130 |     | <span class='unexecuted'>        emit Mint(msg.sender, amount0, amount1);</span>
+ 131 |     | <span class='neutral'>    }</span>
+ 132 |     | <span class='neutral'></span>
+ 133 |     | <span class='neutral'>    // this low-level function should be called from a contract which performs important safety checks</span>
+ 134 |     | <span class='unexecuted'>    function burn(address to) external lock returns (uint amount0, uint amount1) {</span>
+ 135 |     | <span class='unexecuted'>        (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings</span>
+ 136 |     | <span class='unexecuted'>        address _token0 = token0;                                // gas savings</span>
+ 137 |     | <span class='unexecuted'>        address _token1 = token1;                                // gas savings</span>
+ 138 |     | <span class='unexecuted'>        uint balance0 = IERC20(_token0).balanceOf(address(this));</span>
+ 139 |     | <span class='unexecuted'>        uint balance1 = IERC20(_token1).balanceOf(address(this));</span>
+ 140 |     | <span class='unexecuted'>        uint liquidity = balanceOf[address(this)];</span>
+ 141 |     | <span class='neutral'></span>
+ 142 |     | <span class='unexecuted'>        bool feeOn = _mintFee(_reserve0, _reserve1);</span>
+ 143 |     | <span class='unexecuted'>        uint _totalSupply = totalSupply; // gas savings, must be defined here since totalSupply can update in _mintFee</span>
+ 144 |     | <span class='unexecuted'>        amount0 = liquidity.mul(balance0) / _totalSupply; // using balances ensures pro-rata distribution</span>
+ 145 |     | <span class='unexecuted'>        amount1 = liquidity.mul(balance1) / _totalSupply; // using balances ensures pro-rata distribution</span>
+ 146 |     | <span class='unexecuted'>        require(amount0 &gt; 0 &amp;&amp; amount1 &gt; 0, &#39;UniswapV2: INSUFFICIENT_LIQUIDITY_BURNED&#39;);</span>
+ 147 |     | <span class='unexecuted'>        _burn(address(this), liquidity);</span>
+ 148 |     | <span class='unexecuted'>        _safeTransfer(_token0, to, amount0);</span>
+ 149 |     | <span class='unexecuted'>        _safeTransfer(_token1, to, amount1);</span>
+ 150 |     | <span class='unexecuted'>        balance0 = IERC20(_token0).balanceOf(address(this));</span>
+ 151 |     | <span class='unexecuted'>        balance1 = IERC20(_token1).balanceOf(address(this));</span>
+ 152 |     | <span class='neutral'></span>
+ 153 |     | <span class='unexecuted'>        _update(balance0, balance1, _reserve0, _reserve1);</span>
+ 154 |     | <span class='unexecuted'>        if (feeOn) kLast = uint(reserve0).mul(reserve1); // reserve0 and reserve1 are up-to-date</span>
+ 155 |     | <span class='unexecuted'>        emit Burn(msg.sender, amount0, amount1, to);</span>
+ 156 |     | <span class='neutral'>    }</span>
+ 157 |     | <span class='neutral'></span>
+ 158 |     | <span class='neutral'>    // this low-level function should be called from a contract which performs important safety checks</span>
+ 159 |     | <span class='unexecuted'>    function swap(uint amount0Out, uint amount1Out, address to, bytes calldata data) external lock {</span>
+ 160 |     | <span class='unexecuted'>        require(amount0Out &gt; 0 || amount1Out &gt; 0, &#39;UniswapV2: INSUFFICIENT_OUTPUT_AMOUNT&#39;);</span>
+ 161 |     | <span class='unexecuted'>        (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings</span>
+ 162 |     | <span class='unexecuted'>        require(amount0Out &lt; _reserve0 &amp;&amp; amount1Out &lt; _reserve1, &#39;UniswapV2: INSUFFICIENT_LIQUIDITY&#39;);</span>
+ 163 |     | <span class='neutral'></span>
+ 164 |     | <span class='unexecuted'>        uint balance0;</span>
+ 165 |     | <span class='neutral'>        uint balance1;</span>
+ 166 |     | <span class='neutral'>        { // scope for _token{0,1}, avoids stack too deep errors</span>
+ 167 |     | <span class='unexecuted'>        address _token0 = token0;</span>
+ 168 |     | <span class='unexecuted'>        address _token1 = token1;</span>
+ 169 |     | <span class='unexecuted'>        require(to != _token0 &amp;&amp; to != _token1, &#39;UniswapV2: INVALID_TO&#39;);</span>
+ 170 |     | <span class='unexecuted'>        if (amount0Out &gt; 0) _safeTransfer(_token0, to, amount0Out); // optimistically transfer tokens</span>
+ 171 |     | <span class='unexecuted'>        if (amount1Out &gt; 0) _safeTransfer(_token1, to, amount1Out); // optimistically transfer tokens</span>
+ 172 |     | <span class='unexecuted'>        if (data.length &gt; 0) IUniswapV2Callee(to).uniswapV2Call(msg.sender, amount0Out, amount1Out, data);</span>
+ 173 |     | <span class='unexecuted'>        balance0 = IERC20(_token0).balanceOf(address(this));</span>
+ 174 |     | <span class='unexecuted'>        balance1 = IERC20(_token1).balanceOf(address(this));</span>
+ 175 |     | <span class='neutral'>        }</span>
+ 176 |     | <span class='unexecuted'>        uint amount0In = balance0 &gt; _reserve0 - amount0Out ? balance0 - (_reserve0 - amount0Out) : 0;</span>
+ 177 |     | <span class='unexecuted'>        uint amount1In = balance1 &gt; _reserve1 - amount1Out ? balance1 - (_reserve1 - amount1Out) : 0;</span>
+ 178 |     | <span class='unexecuted'>        require(amount0In &gt; 0 || amount1In &gt; 0, &#39;UniswapV2: INSUFFICIENT_INPUT_AMOUNT&#39;);</span>
+ 179 |     | <span class='neutral'>        { // scope for reserve{0,1}Adjusted, avoids stack too deep errors</span>
+ 180 | *   | <span class='executed'>        uint balance0Adjusted = balance0.mul(1000).sub(amount0In.mul(3));</span>
+ 181 |     | <span class='unexecuted'>        uint balance1Adjusted = balance1.mul(1000).sub(amount1In.mul(3));</span>
+ 182 |     | <span class='unexecuted'>        require(balance0Adjusted.mul(balance1Adjusted) &gt;= uint(_reserve0).mul(_reserve1).mul(1000**2), &#39;UniswapV2: K&#39;);</span>
+ 183 |     | <span class='neutral'>        }</span>
+ 184 |     | <span class='neutral'></span>
+ 185 |     | <span class='unexecuted'>        _update(balance0, balance1, _reserve0, _reserve1);</span>
+ 186 |     | <span class='unexecuted'>        emit Swap(msg.sender, amount0In, amount1In, amount0Out, amount1Out, to);</span>
+ 187 |     | <span class='neutral'>    }</span>
+ 188 |     | <span class='neutral'></span>
+ 189 |     | <span class='neutral'>    // force balances to match reserves</span>
+ 190 |     | <span class='unexecuted'>    function skim(address to) external lock {</span>
+ 191 |     | <span class='unexecuted'>        address _token0 = token0; // gas savings</span>
+ 192 |     | <span class='unexecuted'>        address _token1 = token1; // gas savings</span>
+ 193 |     | <span class='unexecuted'>        _safeTransfer(_token0, to, IERC20(_token0).balanceOf(address(this)).sub(reserve0));</span>
+ 194 |     | <span class='unexecuted'>        _safeTransfer(_token1, to, IERC20(_token1).balanceOf(address(this)).sub(reserve1));</span>
+ 195 |     | <span class='neutral'>    }</span>
+ 196 |     | <span class='neutral'></span>
+ 197 |     | <span class='neutral'>    // force reserves to match balances</span>
+ 198 |     | <span class='unexecuted'>    function sync() external lock {</span>
+ 199 |     | <span class='unexecuted'>        _update(IERC20(token0).balanceOf(address(this)), IERC20(token1).balanceOf(address(this)), reserve0, reserve1);</span>
+ 200 |     | <span class='neutral'>    }</span>
+ 201 |     | <span class='neutral'>}</span>
+ 202 |     | <span class='neutral'></span>
+
+</code>
+<br />
+
+<b>/home/v2-core/contracts/corpus/EchidnaTest.sol</b>
+<code>
+  1 |     | <span class='neutral'>pragma solidity =0.5.16;</span>
+  2 |     | <span class='neutral'></span>
+  3 |     | <span class='neutral'>import &quot;./Setup.sol&quot;;</span>
+  4 |     | <span class='neutral'></span>
+  5 | *   | <span class='executed'>contract EchidnaTest  is Setup {</span>
+  6 | *   | <span class='executed'>    function test_K_increasesWhenUserDeposits(uint amount1, uint amount2) public{</span>
+  7 |     | <span class='neutral'>        // pre-condition</span>
+  8 |     | <span class='neutral'>        //get the reserves</span>
+  9 |     | <span class='neutral'></span>
+ 10 | *   | <span class='executed'>        amount1 = _in_between(amount1, 1000, uint(-1));</span>
+ 11 | *   | <span class='executed'>        amount2 = _in_between(amount2, 1000, uint(-1));</span>
+ 12 |     | <span class='neutral'></span>
+ 13 | *   | <span class='executed'>        if (! completed) {</span>
+ 14 | *   | <span class='executed'>            mintToken(amount1, amount2);</span>
+ 15 |     | <span class='neutral'>        }</span>
+ 16 |     | <span class='neutral'></span>
+ 17 | *   | <span class='executed'>        uint lpTokenBalanceOfUserBefore = pair.balanceOf(address(user));</span>
+ 18 |     | <span class='neutral'></span>
+ 19 | *   | <span class='executed'>        (uint token0ReservesBefore, uint token1ReserVersBefore,) = pair.getReserves();</span>
+ 20 | *   | <span class='executed'>        uint k_before = token0ReservesBefore * token1ReserVersBefore;</span>
+ 21 |     | <span class='neutral'></span>
+ 22 |     | <span class='neutral'></span>
+ 23 |     | <span class='neutral'>        // action</span>
+ 24 |     | <span class='neutral'>        // user makes a deposit into the pair </span>
+ 25 | *   | <span class='executed'>        (bool hit, bytes memory lpAmountBytes) = user.proxy(address(pair),abi.encodeWithSelector( pair.mint.selector, address(user)));</span>
+ 26 |     | <span class='neutral'>        // transfer  token 0 and token 1 to the pair</span>
+ 27 | *   | <span class='executed'>        uint lp_amount  = abi.decode(lpAmountBytes, (uint256));</span>
+ 28 | *   | <span class='executed'>        require(lp_amount &gt; 0, &quot;lp amount must be &gt; 0&quot;);</span>
+ 29 |     | <span class='neutral'>        // user.proxy() ;</span>
+ 30 |     | <span class='neutral'></span>
+ 31 |     | <span class='neutral'></span>
+ 32 |     | <span class='neutral'>        // post-condition</span>
+ 33 | *   | <span class='executed'>        (uint token0ReserveAfter, uint token1ReserVeresAfer,) = pair.getReserves();</span>
+ 34 | *   | <span class='executed'>        uint lpTokenBalanceOfUserAfter = pair.balanceOf(address(user));</span>
+ 35 | *   | <span class='executed'>        uint k_after = token0ReserveAfter * token1ReserVeresAfer;</span>
+ 36 |     | <span class='neutral'></span>
+ 37 | *e  | <span class='executed'>        assert ( token0ReserveAfter &gt; token0ReservesBefore);</span>
+ 38 |     | <span class='unexecuted'>        assert (k_after &gt; k_before);</span>
+ 39 |     | <span class='unexecuted'>        assert (lpTokenBalanceOfUserAfter &gt; lpTokenBalanceOfUserBefore);</span>
+ 40 |     | <span class='neutral'>        </span>
+ 41 |     | <span class='neutral'></span>
+ 42 |     | <span class='neutral'>    }</span>
+ 43 |     | <span class='neutral'>}</span>
+
+</code>
+<br />
+
+<b>/home/v2-core/contracts/corpus/Setup.sol</b>
+<code>
+  1 |     | <span class='neutral'>pragma solidity =0.5.16;</span>
+  2 |     | <span class='neutral'></span>
+  3 |     | <span class='neutral'>import &quot;../UniswapV2Pair.sol&quot;;</span>
+  4 |     | <span class='neutral'>import &quot;../UniswapV2Factory.sol&quot;;</span>
+  5 |     | <span class='neutral'>import &quot;../UniswapV2ERC20.sol&quot;;</span>
+  6 |     | <span class='neutral'></span>
+  7 |     | <span class='unexecuted'>contract Setup {</span>
+  8 |     | <span class='neutral'></span>
+  9 | *   | <span class='executed'>    UniswapV2Factory public factory;</span>
+ 10 | *   | <span class='executed'>    UniswapV2Pair public pair;</span>
+ 11 | *   | <span class='executed'>    UniswapV2ERC20 public token0;</span>
+ 12 | *   | <span class='executed'>    UniswapV2ERC20 public token1;</span>
+ 13 | *   | <span class='executed'>    User  public user;</span>
+ 14 |     | <span class='unexecuted'>    bool completed =false;</span>
+ 15 |     | <span class='neutral'></span>
+ 16 |     | <span class='unexecuted'>    constructor() public{</span>
+ 17 |     | <span class='unexecuted'>        factory = new UniswapV2Factory(address(this));</span>
+ 18 |     | <span class='unexecuted'>        token0 = new UniswapV2ERC20();</span>
+ 19 |     | <span class='unexecuted'>        token1 = new UniswapV2ERC20();</span>
+ 20 |     | <span class='unexecuted'>        address _pair = factory.createPair(address(token0), address(token1));</span>
+ 21 |     | <span class='unexecuted'>        pair = UniswapV2Pair(_pair);</span>
+ 22 |     | <span class='unexecuted'>        user = new User();</span>
+ 23 |     | <span class='neutral'></span>
+ 24 |     | <span class='neutral'>    }</span>
+ 25 |     | <span class='neutral'></span>
+ 26 | *   | <span class='executed'>    function mintToken(uint amount1, uint amount2 ) internal {</span>
+ 27 | *   | <span class='executed'>        token0.manualMint(address(user), amount1);</span>
+ 28 | *   | <span class='executed'>        token1.manualMint(address(user), amount2);</span>
+ 29 | *   | <span class='executed'>        completed = true;</span>
+ 30 |     | <span class='neutral'>    }</span>
+ 31 |     | <span class='neutral'></span>
+ 32 | *   | <span class='executed'>    function _in_between(uint _value, uint _min , uint _max) internal pure returns(uint) {</span>
+ 33 | *   | <span class='executed'>        return  _min  + (_value % _max + 1);</span>
+ 34 |     | <span class='neutral'>    }</span>
+ 35 |     | <span class='neutral'>}</span>
+ 36 |     | <span class='neutral'></span>
+ 37 |     | <span class='neutral'></span>
+ 38 | *   | <span class='executed'>contract User{</span>
+ 39 | *   | <span class='executed'>    function proxy(address _target , bytes memory  _data) public returns(bool success, bytes memory _returnData) {</span>
+ 40 | *   | <span class='executed'>        return _target.call(_data);</span>
+ 41 |     | <span class='neutral'>    }</span>
+ 42 |     | <span class='neutral'>}</span>
+
+</code>
+<br />
+
+<b>/home/v2-core/contracts/interfaces/IERC20.sol</b>
+<code>
+  1 |     | <span class='neutral'>pragma solidity &gt;=0.5.0;</span>
+  2 |     | <span class='neutral'></span>
+  3 |     | <span class='neutral'>interface IERC20 {</span>
+  4 |     | <span class='neutral'>    event Approval(address indexed owner, address indexed spender, uint value);</span>
+  5 |     | <span class='neutral'>    event Transfer(address indexed from, address indexed to, uint value);</span>
+  6 |     | <span class='neutral'></span>
+  7 |     | <span class='neutral'>    function name() external view returns (string memory);</span>
+  8 |     | <span class='neutral'>    function symbol() external view returns (string memory);</span>
+  9 |     | <span class='neutral'>    function decimals() external view returns (uint8);</span>
+ 10 |     | <span class='neutral'>    function totalSupply() external view returns (uint);</span>
+ 11 |     | <span class='neutral'>    function balanceOf(address owner) external view returns (uint);</span>
+ 12 |     | <span class='neutral'>    function allowance(address owner, address spender) external view returns (uint);</span>
+ 13 |     | <span class='neutral'></span>
+ 14 |     | <span class='neutral'>    function approve(address spender, uint value) external returns (bool);</span>
+ 15 |     | <span class='neutral'>    function transfer(address to, uint value) external returns (bool);</span>
+ 16 |     | <span class='neutral'>    function transferFrom(address from, address to, uint value) external returns (bool);</span>
+ 17 |     | <span class='neutral'>}</span>
+ 18 |     | <span class='neutral'></span>
+
+</code>
+<br />
+
+<b>/home/v2-core/contracts/interfaces/IUniswapV2Callee.sol</b>
+<code>
+ 1 |     | <span class='neutral'>pragma solidity &gt;=0.5.0;</span>
+ 2 |     | <span class='neutral'></span>
+ 3 |     | <span class='neutral'>interface IUniswapV2Callee {</span>
+ 4 |     | <span class='neutral'>    function uniswapV2Call(address sender, uint amount0, uint amount1, bytes calldata data) external;</span>
+ 5 |     | <span class='neutral'>}</span>
+ 6 |     | <span class='neutral'></span>
+
+</code>
+<br />
+
+<b>/home/v2-core/contracts/interfaces/IUniswapV2ERC20.sol</b>
+<code>
+  1 |     | <span class='neutral'>pragma solidity &gt;=0.5.0;</span>
+  2 |     | <span class='neutral'></span>
+  3 |     | <span class='neutral'>interface IUniswapV2ERC20 {</span>
+  4 |     | <span class='neutral'>    event Approval(address indexed owner, address indexed spender, uint value);</span>
+  5 |     | <span class='neutral'>    event Transfer(address indexed from, address indexed to, uint value);</span>
+  6 |     | <span class='neutral'></span>
+  7 |     | <span class='neutral'>    function name() external pure returns (string memory);</span>
+  8 |     | <span class='neutral'>    function symbol() external pure returns (string memory);</span>
+  9 |     | <span class='neutral'>    function decimals() external pure returns (uint8);</span>
+ 10 |     | <span class='neutral'>    function totalSupply() external view returns (uint);</span>
+ 11 |     | <span class='neutral'>    function balanceOf(address owner) external view returns (uint);</span>
+ 12 |     | <span class='neutral'>    function allowance(address owner, address spender) external view returns (uint);</span>
+ 13 |     | <span class='neutral'></span>
+ 14 |     | <span class='neutral'>    function approve(address spender, uint value) external returns (bool);</span>
+ 15 |     | <span class='neutral'>    function transfer(address to, uint value) external returns (bool);</span>
+ 16 |     | <span class='neutral'>    function transferFrom(address from, address to, uint value) external returns (bool);</span>
+ 17 |     | <span class='neutral'></span>
+ 18 |     | <span class='neutral'>    function DOMAIN_SEPARATOR() external view returns (bytes32);</span>
+ 19 |     | <span class='neutral'>    function PERMIT_TYPEHASH() external pure returns (bytes32);</span>
+ 20 |     | <span class='neutral'>    function nonces(address owner) external view returns (uint);</span>
+ 21 |     | <span class='neutral'></span>
+ 22 |     | <span class='neutral'>    function permit(address owner, address spender, uint value, uint deadline, uint8 v, bytes32 r, bytes32 s) external;</span>
+ 23 |     | <span class='neutral'>}</span>
+ 24 |     | <span class='neutral'></span>
+
+</code>
+<br />
+
+<b>/home/v2-core/contracts/interfaces/IUniswapV2Factory.sol</b>
+<code>
+  1 |     | <span class='neutral'>pragma solidity &gt;=0.5.0;</span>
+  2 |     | <span class='neutral'></span>
+  3 |     | <span class='neutral'>interface IUniswapV2Factory {</span>
+  4 |     | <span class='neutral'>    event PairCreated(address indexed token0, address indexed token1, address pair, uint);</span>
+  5 |     | <span class='neutral'></span>
+  6 |     | <span class='neutral'>    function feeTo() external view returns (address);</span>
+  7 |     | <span class='neutral'>    function feeToSetter() external view returns (address);</span>
+  8 |     | <span class='neutral'></span>
+  9 |     | <span class='neutral'>    function getPair(address tokenA, address tokenB) external view returns (address pair);</span>
+ 10 |     | <span class='neutral'>    function allPairs(uint) external view returns (address pair);</span>
+ 11 |     | <span class='neutral'>    function allPairsLength() external view returns (uint);</span>
+ 12 |     | <span class='neutral'></span>
+ 13 |     | <span class='neutral'>    function createPair(address tokenA, address tokenB) external returns (address pair);</span>
+ 14 |     | <span class='neutral'></span>
+ 15 |     | <span class='neutral'>    function setFeeTo(address) external;</span>
+ 16 |     | <span class='neutral'>    function setFeeToSetter(address) external;</span>
+ 17 |     | <span class='neutral'>}</span>
+ 18 |     | <span class='neutral'></span>
+
+</code>
+<br />
+
+<b>/home/v2-core/contracts/interfaces/IUniswapV2Pair.sol</b>
+<code>
+  1 |     | <span class='neutral'>pragma solidity &gt;=0.5.0;</span>
+  2 |     | <span class='neutral'></span>
+  3 |     | <span class='neutral'>interface IUniswapV2Pair {</span>
+  4 |     | <span class='neutral'>    event Approval(address indexed owner, address indexed spender, uint value);</span>
+  5 |     | <span class='neutral'>    event Transfer(address indexed from, address indexed to, uint value);</span>
+  6 |     | <span class='neutral'></span>
+  7 |     | <span class='neutral'>    function name() external pure returns (string memory);</span>
+  8 |     | <span class='neutral'>    function symbol() external pure returns (string memory);</span>
+  9 |     | <span class='neutral'>    function decimals() external pure returns (uint8);</span>
+ 10 |     | <span class='neutral'>    function totalSupply() external view returns (uint);</span>
+ 11 |     | <span class='neutral'>    function balanceOf(address owner) external view returns (uint);</span>
+ 12 |     | <span class='neutral'>    function allowance(address owner, address spender) external view returns (uint);</span>
+ 13 |     | <span class='neutral'></span>
+ 14 |     | <span class='neutral'>    function approve(address spender, uint value) external returns (bool);</span>
+ 15 |     | <span class='neutral'>    function transfer(address to, uint value) external returns (bool);</span>
+ 16 |     | <span class='neutral'>    function transferFrom(address from, address to, uint value) external returns (bool);</span>
+ 17 |     | <span class='neutral'></span>
+ 18 |     | <span class='neutral'>    function DOMAIN_SEPARATOR() external view returns (bytes32);</span>
+ 19 |     | <span class='neutral'>    function PERMIT_TYPEHASH() external pure returns (bytes32);</span>
+ 20 |     | <span class='neutral'>    function nonces(address owner) external view returns (uint);</span>
+ 21 |     | <span class='neutral'></span>
+ 22 |     | <span class='neutral'>    function permit(address owner, address spender, uint value, uint deadline, uint8 v, bytes32 r, bytes32 s) external;</span>
+ 23 |     | <span class='neutral'></span>
+ 24 |     | <span class='neutral'>    event Mint(address indexed sender, uint amount0, uint amount1);</span>
+ 25 |     | <span class='neutral'>    event Burn(address indexed sender, uint amount0, uint amount1, address indexed to);</span>
+ 26 |     | <span class='neutral'>    event Swap(</span>
+ 27 |     | <span class='neutral'>        address indexed sender,</span>
+ 28 |     | <span class='neutral'>        uint amount0In,</span>
+ 29 |     | <span class='neutral'>        uint amount1In,</span>
+ 30 |     | <span class='neutral'>        uint amount0Out,</span>
+ 31 |     | <span class='neutral'>        uint amount1Out,</span>
+ 32 |     | <span class='neutral'>        address indexed to</span>
+ 33 |     | <span class='neutral'>    );</span>
+ 34 |     | <span class='neutral'>    event Sync(uint112 reserve0, uint112 reserve1);</span>
+ 35 |     | <span class='neutral'></span>
+ 36 |     | <span class='neutral'>    function MINIMUM_LIQUIDITY() external pure returns (uint);</span>
+ 37 |     | <span class='neutral'>    function factory() external view returns (address);</span>
+ 38 |     | <span class='neutral'>    function token0() external view returns (address);</span>
+ 39 |     | <span class='neutral'>    function token1() external view returns (address);</span>
+ 40 |     | <span class='neutral'>    function getReserves() external view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast);</span>
+ 41 |     | <span class='neutral'>    function price0CumulativeLast() external view returns (uint);</span>
+ 42 |     | <span class='neutral'>    function price1CumulativeLast() external view returns (uint);</span>
+ 43 |     | <span class='neutral'>    function kLast() external view returns (uint);</span>
+ 44 |     | <span class='neutral'></span>
+ 45 |     | <span class='neutral'>    function mint(address to) external returns (uint liquidity);</span>
+ 46 |     | <span class='neutral'>    function burn(address to) external returns (uint amount0, uint amount1);</span>
+ 47 |     | <span class='neutral'>    function swap(uint amount0Out, uint amount1Out, address to, bytes calldata data) external;</span>
+ 48 |     | <span class='neutral'>    function skim(address to) external;</span>
+ 49 |     | <span class='neutral'>    function sync() external;</span>
+ 50 |     | <span class='neutral'></span>
+ 51 |     | <span class='neutral'>    function initialize(address, address) external;</span>
+ 52 |     | <span class='neutral'>}</span>
+ 53 |     | <span class='neutral'></span>
+
+</code>
+<br />
+
+<b>/home/v2-core/contracts/libraries/Math.sol</b>
+<code>
+  1 |     | <span class='neutral'>pragma solidity =0.5.16;</span>
+  2 |     | <span class='neutral'></span>
+  3 |     | <span class='neutral'>// a library for performing various math operations</span>
+  4 |     | <span class='neutral'></span>
+  5 |     | <span class='unexecuted'>library Math {</span>
+  6 |     | <span class='unexecuted'>    function min(uint x, uint y) internal pure returns (uint z) {</span>
+  7 |     | <span class='unexecuted'>        z = x &lt; y ? x : y;</span>
+  8 |     | <span class='neutral'>    }</span>
+  9 |     | <span class='neutral'></span>
+ 10 |     | <span class='neutral'>    // babylonian method (https://en.wikipedia.org/wiki/Methods_of_computing_square_roots#Babylonian_method)</span>
+ 11 | *   | <span class='executed'>    function sqrt(uint y) internal pure returns (uint z) {</span>
+ 12 | *   | <span class='executed'>        if (y &gt; 3) {</span>
+ 13 |     | <span class='unexecuted'>            z = y;</span>
+ 14 |     | <span class='unexecuted'>            uint x = y / 2 + 1;</span>
+ 15 |     | <span class='unexecuted'>            while (x &lt; z) {</span>
+ 16 |     | <span class='unexecuted'>                z = x;</span>
+ 17 |     | <span class='unexecuted'>                x = (y / x + x) / 2;</span>
+ 18 |     | <span class='neutral'>            }</span>
+ 19 | *   | <span class='executed'>        } else if (y != 0) {</span>
+ 20 |     | <span class='unexecuted'>            z = 1;</span>
+ 21 |     | <span class='neutral'>        }</span>
+ 22 |     | <span class='neutral'>    }</span>
+ 23 |     | <span class='neutral'>}</span>
+ 24 |     | <span class='neutral'></span>
+
+</code>
+<br />
+
+<b>/home/v2-core/contracts/libraries/SafeMath.sol</b>
+<code>
+  1 |     | <span class='neutral'>pragma solidity =0.5.16;</span>
+  2 |     | <span class='neutral'></span>
+  3 |     | <span class='neutral'>// a library for performing overflow-safe math, courtesy of DappHub (https://github.com/dapphub/ds-math)</span>
+  4 |     | <span class='neutral'></span>
+  5 |     | <span class='unexecuted'>library SafeMath {</span>
+  6 | *   | <span class='executed'>    function add(uint x, uint y) internal pure returns (uint z) {</span>
+  7 | *   | <span class='executed'>        require((z = x + y) &gt;= x, &#39;ds-math-add-overflow&#39;);</span>
+  8 |     | <span class='neutral'>    }</span>
+  9 |     | <span class='neutral'></span>
+ 10 | *   | <span class='executed'>    function sub(uint x, uint y) internal pure returns (uint z) {</span>
+ 11 | *   | <span class='executed'>        require((z = x - y) &lt;= x, &#39;ds-math-sub-underflow&#39;);</span>
+ 12 |     | <span class='neutral'>    }</span>
+ 13 |     | <span class='neutral'></span>
+ 14 | *   | <span class='executed'>    function mul(uint x, uint y) internal pure returns (uint z) {</span>
+ 15 | *   | <span class='executed'>        require(y == 0 || (z = x * y) / y == x, &#39;ds-math-mul-overflow&#39;);</span>
+ 16 |     | <span class='neutral'>    }</span>
+ 17 |     | <span class='neutral'>}</span>
+ 18 |     | <span class='neutral'></span>
+
+</code>
+<br />
+
+<b>/home/v2-core/contracts/libraries/UQ112x112.sol</b>
+<code>
+  1 |     | <span class='neutral'>pragma solidity =0.5.16;</span>
+  2 |     | <span class='neutral'></span>
+  3 |     | <span class='neutral'>// a library for handling binary fixed point numbers (https://en.wikipedia.org/wiki/Q_(number_format))</span>
+  4 |     | <span class='neutral'></span>
+  5 |     | <span class='neutral'>// range: [0, 2**112 - 1]</span>
+  6 |     | <span class='neutral'>// resolution: 1 / 2**112</span>
+  7 |     | <span class='neutral'></span>
+  8 |     | <span class='unexecuted'>library UQ112x112 {</span>
+  9 |     | <span class='unexecuted'>    uint224 constant Q112 = 2**112;</span>
+ 10 |     | <span class='neutral'></span>
+ 11 |     | <span class='neutral'>    // encode a uint112 as a UQ112x112</span>
+ 12 |     | <span class='unexecuted'>    function encode(uint112 y) internal pure returns (uint224 z) {</span>
+ 13 |     | <span class='unexecuted'>        z = uint224(y) * Q112; // never overflows</span>
+ 14 |     | <span class='neutral'>    }</span>
+ 15 |     | <span class='neutral'></span>
+ 16 |     | <span class='neutral'>    // divide a UQ112x112 by a uint112, returning a UQ112x112</span>
+ 17 |     | <span class='unexecuted'>    function uqdiv(uint224 x, uint112 y) internal pure returns (uint224 z) {</span>
+ 18 |     | <span class='unexecuted'>        z = x / uint224(y);</span>
+ 19 |     | <span class='neutral'>    }</span>
+ 20 |     | <span class='neutral'>}</span>
+ 21 |     | <span class='neutral'></span>
+
+</code>
+<br />
+
+<b>/home/v2-core/contracts/test/ERC20.sol</b>
+<code>
+  1 |     | <span class='neutral'>pragma solidity =0.5.16;</span>
+  2 |     | <span class='neutral'></span>
+  3 |     | <span class='neutral'>import &#39;../UniswapV2ERC20.sol&#39;;</span>
+  4 |     | <span class='neutral'></span>
+  5 | *   | <span class='executed'>contract ERC20 is UniswapV2ERC20 {</span>
+  6 |     | <span class='unexecuted'>    constructor(uint _totalSupply) public {</span>
+  7 |     | <span class='unexecuted'>        _mint(msg.sender, _totalSupply);</span>
+  8 |     | <span class='neutral'>    }</span>
+  9 |     | <span class='neutral'>}</span>
+ 10 |     | <span class='neutral'></span>
+
+</code>
+<br />
+
